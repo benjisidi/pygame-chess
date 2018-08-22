@@ -3,11 +3,10 @@ import numpy as np
 import operator
 import time
 import os
-from button import button, txt, txtbox #Saves 'button.button()'
+from button import button, txt, txtbox
 from piece import piece
 from chess_logic import *
 from parse_moves import *
-import dialog
 import wx
 import engine
 import multiprocessing
@@ -54,16 +53,17 @@ Done:
 
 # FILL COLOUR: R: 229 G: 226 B: 221
 
+# Draws chequerboard in given colours ([r,g,b] format), with each square having sidelength box_side
 def draw_board(colour_white, colour_black):
-	# Draws chequerboard in given colours ([r,g,b] format), with each square having sidelength box_side
 	for j in range(0, 8):
-		coords = (0, j*box_side, box_side, box_side)
+		coords = (0, j*box_side, box_side, box_side) # box_side is global and set in run_game function
 		for i in range(0, 8):
 			if (i+j) % 2 == 0: colour = colour_white
 			else: colour = colour_black
 			pygame.draw.rect(screen, colour, coords)
 			coords = tuple(map(operator.add, coords, (box_side, 0, 0, 0)))
 
+# Takes a seconds value and returns a string in the format 'mm:ss'
 def secs_to_readable(secs):
 	mins = secs/60.
 	minute = np.floor(mins)
@@ -75,22 +75,28 @@ def secs_to_readable(secs):
 		secs = int(secs)
 		return '{0:02d}'.format(minute) + ':' + '{0:02d}'.format(secs)
 
+# Creates the buttons and textboxes in the sidebar, along with the clock
 def initialize_sidebar():
 	global buttons
 	global clock_time
 	global moves
-	new = button(screen, 829, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255, 255, 255]], function = new_game, text='NEW', font=['assets/avenir_next_pro_bold.ttf', 32, 'file', [64, 64, 64]])
-	save = button(screen, 939, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255,255,255]], function = save_game, text='SAVE', font=['assets/avenir_next_pro_bold.ttf', 32, 'file', [64, 64, 64]])
-	load = button(screen, 1049, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255,255,255]], function = load_game, text='LOAD', font=['assets/avenir_next_pro_bold.ttf', 32, 'file', [64, 64, 64]])
-	quit = button(screen, 1159, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255,255,255]], function = quit_game, text='QUIT', font=['assets/avenir_next_pro_bold.ttf', 32, 'file', [64, 64, 64]])
+	# button function unnamed arguments: (surface, x, y, width, height, shape...)
+	new = button(screen, 829, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255, 255, 255]], function = new_game, text='NEW', font=['assets/Lato-Bold.ttf', 32, 'file', [64, 64, 64]])
+	save = button(screen, 939, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255,255,255]], function = save_game, text='SAVE', font=['assets/Lato-Bold.ttf', 32, 'file', [64, 64, 64]])
+	load = button(screen, 1049, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255,255,255]], function = load_game, text='LOAD', font=['assets/Lato-Bold.ttf', 32, 'file', [64, 64, 64]])
+	quit = button(screen, 1159, 27, 100, 44, 'rrect', colour = [229, 226, 221], hover_colours = [[129, 126, 121],[50,50,50],[200,200,200],[255,255,255]], function = quit_game, text='QUIT', font=['assets/Lato-Bold.ttf', 32, 'file', [64, 64, 64]])
+	# moves_box is a button with no associated function; simply a convenient way to draw the rounded rectangle to hold the text boxes
 	moves_box = button(screen, 829, 101, 250, 335, 'rrect', colour = [50,50,50], rectrad=.05)
-	moves_numbers = txtbox(screen, 840, 110, 25, 17, '', font=['assets/avenir_next_pro.ttf', 18, 'file', [229, 226, 221], False, False])
-	moves_white = txtbox(screen, 880, 110, 75, 17, '', font=['assets/avenir_next_pro.ttf', 18, 'file', [229, 226, 221], False, False])
-	moves_black = txtbox(screen, 980, 110, 75, 17, '', font=['assets/avenir_next_pro.ttf', 18, 'file', [229, 226, 221], False, False])
+	# moves_box contains 3 columns; the move number, white's move and black's move
+	moves_numbers = txtbox(screen, 840, 110, 25, 17, '', font=['assets/Lato-Regular.ttf', 18, 'file', [229, 226, 221], False, False])
+	moves_white = txtbox(screen, 880, 110, 75, 17, '', font=['assets/Lato-Regular.ttf', 18, 'file', [229, 226, 221], False, False])
+	moves_black = txtbox(screen, 980, 110, 75, 17, '', font=['assets/Lato-Regular.ttf', 18, 'file', [229, 226, 221], False, False])
+	# buttons to scroll the moves box up and down
 	scup = button(screen, 1095, 110, 23, 29, 'uarrow', colour = [229, 226, 221], function = scroll_moves_up, holdable=True)
 	scdown = button(screen, 1095, 162, 23, 29, 'darrow', colour = [229, 226, 221], function = scroll_moves_down, holdable=True)
-	clock_black = button(screen, 829, 465, 428, 123, 'rrect', colour = [50, 50, 50], text=secs_to_readable(clock_time[1]), font=['assets/avenir_next_pro_bold.ttf', 92, 'file', [229, 226, 221]])
-	clock_white = button(screen, 829, 588, 428, 123, 'rrect', colour = [229, 226, 221], text=secs_to_readable(clock_time[0]), font=['assets/avenir_next_pro_bold.ttf', 92, 'file', [50, 50, 50]])
+	clock_black = button(screen, 829, 465, 428, 123, 'rrect', colour = [50, 50, 50], text=secs_to_readable(clock_time[1]), font=['assets/Lato-Bold.ttf', 92, 'file', [229, 226, 221]])
+	clock_white = button(screen, 829, 588, 428, 123, 'rrect', colour = [229, 226, 221], text=secs_to_readable(clock_time[0]), font=['assets/Lato-Bold.ttf', 92, 'file', [50, 50, 50]])
+	# Convenient way to fill buttons dictionary
 	buttons_list = [new, save, load, quit, moves_box, moves_numbers, moves_white, moves_black, scup, scdown, clock_black, clock_white]
 	buttons_names = ['new', 'save', 'load', 'quit', 'moves_box', 'moves_numbers', 'moves_white', 'moves_black', 'scup', 'scdown', 'clock_black', 'clock_white']
 	for i in range(len(buttons_names)):
@@ -105,14 +111,17 @@ def draw_sidebar():
 	pygame.draw.rect(screen, [50, 50, 50], (829, 565, 428, 23)) # Clock fill
 	pygame.draw.rect(screen, [229, 226, 221], (829, 588, 428, 23)) # Clock fill
 	numbers, white, black = sort_moves(moves)
+	# Update the clock and move box text
 	setattr(buttons['clock_black'], 'text', secs_to_readable(clock_time[1]))
 	setattr(buttons['clock_white'], 'text', secs_to_readable(clock_time[0]))
 	setattr(buttons['moves_numbers'], 'body', numbers)
 	setattr(buttons['moves_white'], 'body', white)
 	setattr(buttons['moves_black'], 'body', black)
+	# Draw all the elements
 	for i in range(len(buttons_names)):
 		buttons[buttons_names[i]].draw()
 
+# Draw an image at x, y and call an associated action if it is clicked. Used for queening screen.
 def draw_im_button(img, x, y, action=None, param=None, size=100):
 	mouse = pygame.mouse.get_pos()
 	click = pygame.mouse.get_pressed()
@@ -123,10 +132,12 @@ def draw_im_button(img, x, y, action=None, param=None, size=100):
 	if (x < mouse[0] < (x + img_size[0])) and (y < mouse[1] < (y + img_size[1])) and (click == (1, 0, 0)) and (action != None):
 		action(param)
 
+# Render text in font and colour at x, y
 def draw_text(text, font, colour, x, y):
 	text = font.render(text, True, colour)
 	screen.blit(text, (x, y))
 
+# Create new game dialog and reset board with new time control
 def new_game():
 	global clock_time
 	global counter
@@ -136,8 +147,10 @@ def new_game():
 	global buttons
 	global increment
 	global engine_moves
+	# Create time control dialog
 	temp_app = wx.App(False)
 	settings = wx.TextEntryDialog(None, 'Set time control [minutes(25)+increment(0)]')
+	# On 'ok', parse input and apply default values if necessary
 	if settings.ShowModal() == wx.ID_OK:
 		time_control = settings.GetValue().split('+')
 		try: 
@@ -151,6 +164,7 @@ def new_game():
 		except IndexError:
 			increment = 0
 		settings.Destroy()
+		# Reset board, turn counter and time
 		for x in live_board:
 			deselect(x)
 		moves = []
@@ -162,9 +176,12 @@ def new_game():
 		setattr(buttons['clock_white'], 'neutral_text_colour', [50, 50, 50])
 		counter = 0
 
+# Create save game dialog, and write clock times and game moves to file
 def save_game():
 	file_path = None
+	# Concatenate moves into single space delimited string
 	gametxt = ' '.join(move for move in moves)
+	# Create save file dialog
 	temp_app = wx.App(False)
 	save_dialog = wx.FileDialog(
 		None, message='Save game as...',
@@ -176,6 +193,7 @@ def save_game():
 	if save_dialog.ShowModal() == wx.ID_OK:
 		file_path = [x for x in save_dialog.GetPaths()]
 	temp_app.MainLoop()
+	# If a file has been entered/selected, write save information to the file and close it
 	if file_path != None:
 		file_path[0] += '.ch'
 		savefile = open(file_path[0], 'w')
@@ -184,12 +202,14 @@ def save_game():
 		savefile.write(gametxt)
 		savefile.close()
 
+# Create load save-file dialog and parse the file to reconstruct the game board state 
 def load_game():
 	global live_board
 	global moves
 	global clock_time
 	global counter
 	global buttons
+	# Create file dialog
 	chosen_file = None
 	temp_app = wx.App(False)
 	load_dialog = wx.FileDialog(
@@ -203,37 +223,45 @@ def load_game():
 			paths = load_dialog.GetPaths()
 			chosen_file = [x for x in paths]
 	temp_app.MainLoop()
+	# If file chosen, call parsing logic on saved file
 	if chosen_file != None:
 		live_board, moves, clock_time, counter = parse_game(chosen_file[0])
 
+# When quit button clicked, stop engine and set "done" flag to true, closing window
 def quit_game():
 	global done
+	# ToDo: are you sure you want to quit?
 	engine.put(AI, 'quit')
-	#are you sure you want to quit?
 	done = True
 
+# Scroll all three columns in the moves box together
 def scroll_moves_up():
 	global buttons
 	for i in ['moves_white', 'moves_black', 'moves_numbers']:
 		buttons[i].scroll_up()
 
+# Scroll all three columns in the moves box together
 def scroll_moves_down():
 	global buttons
 	for i in ['moves_white', 'moves_black', 'moves_numbers']:
 		buttons[i].scroll_down()
 
+
+# At checkmate, set move clock to red
 def end_game():
 	global buttons
 	fullcolour = {'b':'black', 'w':'white'}
 	setattr(buttons['clock_' + fullcolour[turn_colour[(counter)%2]]], 'neutral_text_colour', [198, 0, 0])
 
+
+# Draw rectangle in highlight_colour around the given sq. Takes classic coords.
 def highlight(sq, highlight_colour=[249, 255, 183]): 
-	# Draw rectangle in highlight_colour around the given sq. Takes classic coords.
 	rect = classic_to_pix(sq)
 	rect += [box_side, box_side]
 	pygame.draw.rect(screen, highlight_colour, rect, 3)
 
 
+# Highlight squares that selected piece can move to
 def draw_moves(piece_):
 	global allowed_sqs
 	global moves
@@ -241,29 +269,24 @@ def draw_moves(piece_):
 	for x in available:
 		allowed_sqs.append(x)
 
+# Set a piece to "selected" and highlight its available moves
 def select(piece_):
 	setattr(piece_, 'selected', True),
 	draw_moves(piece_)
 
+# Deselct piece and remove square highlighting
 def deselect(piece_):
 	global allowed_sqs
 	global castlable_sqs
 	setattr(piece_, 'selected', False) # Deselect piece
 	allowed_sqs = [] # De-highlight squares
 
+# Draw piece sprite on its occupied square
 def draw_piece(piece_):
 	coords = classic_to_pix(getattr(piece_, 'pos'))
 	screen.blit(getattr(piece_, 'image'), coords)
 
-
-"""	if not occupied[0]:
-		setattr(piece_, 'pos', sq)
-		deselect(piece_)
-	else:"""
-	# Take if occupying piece is of different colour
-
-
-
+# Apply moving a piece to a square
 def turn(piece_, sq):
 	global live_board
 	global counter
@@ -298,10 +321,13 @@ def turn(piece_, sq):
 		setattr(buttons[key], 'autoscroll', True)
 	AI_plays = True
 
+# Manage the engine taking a turn; create a separate process so the window does not hang while the
+# engine is "thinking"
 def turn_engine():
 	global AI_plays
 	global clock
 	global clock_time
+	# Create process to communicate with engine
 	def AI_worker(AI, engine_moves, return_dict):
 		global clock_time
 		move, loc, dest = engine.play(AI, engine_moves, clock_time[0], clock_time[1])
@@ -312,7 +338,7 @@ def turn_engine():
 	return_dict = manager.dict()
 	p = multiprocessing.Process(target=AI_worker, args=(AI, engine_moves, return_dict))
 	p.start()
-	#move, loc, dest = engine.play(AI, engine_moves)
+	# Continuously check if engine is complete and update the clock in the meantime
 	engine_completed = False
 	while not engine_completed:
 		try:
@@ -326,18 +352,21 @@ def turn_engine():
 			draw_sidebar()
 			pygame.display.flip()
 			clock.tick(30)
+	# Once the engine has returned a move, play it
 	loc = loc.upper()
 	dest = dest.upper()
 	engine_piece = [x for x in live_board if getattr(x, 'pos') == loc][0]
 	turn(engine_piece, dest)
 	AI_plays = False
 
+# Update the board with queened piece
 def queen_piece(params):
 	global live_board
 	global queening
-	live_board = queen(params)
+	live_board = queen(params) # Queen fn in chess_logic - destroy pawn and replace with piece
 	moves[counter-1] += piece.printing_dict[params[1]]
 	queening = [False, None]
+
 
 def run_game():
 	# Define colours for convenience
@@ -460,7 +489,7 @@ def run_game():
 			# Fill with grey
 			pygame.draw.rect(screen, [100, 100, 100], (0, 0, 800, 800))
 			# Draw queening options
-			textfont = pygame.font.Font('assets/avenir_next_pro_bold.ttf', 72) 
+			textfont = pygame.font.Font('assets/Lato-Bold.ttf', 72) 
 			draw_text('Choose your piece', textfont, [0, 0, 0], 75, 100)
 			available_piecetypes = ['queen', 'knight', 'bishop', 'rook']
 			for i in range(0, len(available_piecetypes)):
@@ -483,11 +512,7 @@ def run_game():
 				highlight(getattr(king[0], 'pos'), [254, 86, 160])
 	
 		draw_sidebar()
-		'''printed_moves = moves
-		while len(printed_moves) > linelimit:
-			printed_moves[0:1] = []
-		movetext = '\n'.join(printed_moves)
-		text.writepre(screen, font, textarea, (0,0,0), movetext)'''
+
 
 		pygame.display.flip()
 

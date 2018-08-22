@@ -3,6 +3,7 @@ import chess_logic as clogic
 import readline
 import numpy as np
 
+# Read a traditionally written move and return the board state following that move
 def parse(board, move, colour):
 	pawn_specifiers = 'abcdefgh'
 	piece_specifiers = {e: k for k, e in piece.printing_dict.iteritems()} # Invert type dictionary
@@ -79,6 +80,7 @@ def parse(board, move, colour):
 	#Should only have one candidate left at this point
 	return clogic.move_piece(candidates[0], square, board)
 
+# Open a saved game file and parse the moves one by one to calculate the final board state
 def parse_game(game):
 	gamefile = open(game, 'r')
 	game_board = clogic.set_board('full_board.ini')
@@ -91,6 +93,7 @@ def parse_game(game):
 		game_board = parse(game_board, moves[i], colour[i%2])
 	return game_board, moves, clock_time, int(counter)
 
+# Sort saved moves out so that they can be displayed in the moves box
 def sort_moves(moves):
 	numbers = white = black = ''
 	if moves == []:

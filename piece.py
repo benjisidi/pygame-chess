@@ -24,6 +24,7 @@ class piece():
 	'knight': 1,
 	}
 
+	# Dictionary containing how pieces should be denoted in moves box
 	printing_dict = {
 	'pawn_w': '',
 	'pawn_b': '',

@@ -1,5 +1,6 @@
 import subprocess, time
 
+# Create new subprocess for chosen engine file
 def load(engine_file):
 	engine = subprocess.Popen(
 		engine_file,
@@ -9,9 +10,11 @@ def load(engine_file):
 	)
 	return engine
 
+# Send engine given command
 def put(engine, command):
 	engine.stdin.write(command+'\n')
 
+# Monitor engine responses
 def get(engine, wait_for_bestmove=False):
 	# using the 'isready' command (engine has to answer 'readyok')
 	# to indicate current last line of stdout
@@ -31,6 +34,7 @@ def get(engine, wait_for_bestmove=False):
 			output.append(text)
 	return output[-1]
 
+# Give engine the board state and ask for its move
 def play(engine, engine_board, wtime, btime):
 	movestring = ' '.join(engine_board)
 	put(engine, 'position startpos moves ' + movestring)
@@ -41,6 +45,7 @@ def play(engine, engine_board, wtime, btime):
 	dest = move[2:].upper()
 	return move, piece_loc, dest
 
+# test script
 if __name__ == '__main__':
 	test = load('ai/cheese-19-linux/cheese-19-linux-32')
 	put(test, 'uci')

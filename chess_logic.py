@@ -149,6 +149,7 @@ def can_castle(king, board):
 	else:
 		return [True, castlable_sqs]
 
+# Create a hypothetical board where a given piece has moved to a given square, and taken if appropriate.
 def ghost_board(piece_, sq, board):
 	ghost_board = [x for x in board if x != piece_]
 	for x in ghost_board:

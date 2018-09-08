@@ -12,46 +12,12 @@ import engine
 import multiprocessing
 
 '''
-TUTORIAL: http://programarcadegames.com/index.php?lang=en&chapter=controllers_and_graphics
-
 ToDo:
 	-Quit 'are you sure' dialog
 	-Display taken board --> Under clock?
 	-Toggle AI or human vs human game
 	-Option to play as black vs AI, option to flip board
-
-Done:
-	-Re-do piece assets with fill
-	-Write draw_piece function
-	-Move board with mouse and 'Snap' to location 
-	-Display available squares on click
-	-Game logic:
-		-Basic Movement - 
-		-Basic Taking - 
-		-Turns - 
-		-Check/Checkmate
-		-Allow taking of checking piece
-		-Pawn starting move - 
-		-Pawns taking diagonally -
-		-Pawn queening - 
-		-En passant
-		-Castling
-			-Castlable sqs var - 
-			-Castle fn - Incorperated into move_piece - 
-			-can_castle sets castlable sqs, and checks both rooks w/o being passed them - 
-			-move_piece calls castle fn - Schmushed the two into one fn, 
-			-Can't castle through check
-		-Checkmate
-	-Turn clock
-	-Write new, load, save functions
-	-Add sidebar with game history (+ button to save game to txt file)
-	-Buttons to scroll through game, load game from txt
-	-Game setup dialog
-	-Load & save game dialogs
-	-Implement AI --> Glaurung is UCI compatible and a good level --> UCI python module
 '''
-
-# FILL COLOUR: R: 229 G: 226 B: 221
 
 # Draws chequerboard in given colours ([r,g,b] format), with each square having sidelength box_side
 def draw_board(colour_white, colour_black):
@@ -447,33 +413,37 @@ def run_game():
 	#  ------- Main Program Loop ------
 	while not done:
 
-		#  --- Main event loop
+		#  --- Main event loop ---
 		for event in pygame.event.get():
 			m_pos = pygame.mouse.get_pos()
 			if event.type == pygame.QUIT:
 				quit_game()
 			elif event.type == pygame.MOUSEBUTTONDOWN:
+				# If mouse over moves list, handle scrolling
 				if (829 < m_pos[0] < (829+250)) and (101 < m_pos[1] < (101+335)): 
 					if event.button == 4:
 						scroll_moves_up()
 					elif event.button == 5:
 						scroll_moves_down()
-				if 0 < m_pos[0] < 800: # If mouse is over board, do chess logic
+				# If mouse is over board, do chess logic		
+				if 0 < m_pos[0] < 800: 
 					m_sq = pix_to_classic(m_pos)
+					 # Right click delesects all board
 					if pygame.mouse.get_pressed() == (0, 0, 1):
 						for piece_ in live_board:
-							deselect(piece_) # Right click delesects all board
-					elif pygame.mouse.get_pressed() == (1, 0, 0): # Left click
+							deselect(piece_)
+					# Left click		
+					elif pygame.mouse.get_pressed() == (1, 0, 0): 
 						for piece_ in live_board:
 							if getattr(piece_, 'selected') == True:
 								if m_sq in allowed_sqs:
-									#test_board = set_board('board.ini')
 									turn(piece_, m_sq)
-									#print parse(test_board, moves[counter-1], turn_colour[(counter-1)%2])	
+							# If there's a piece on the square we clicked, and that piece is of the right colour
+							# deselect everything, and select that piece.
 							elif getattr(piece_, 'pos') == m_sq and turn_colour[counter%2] == getattr(piece_, 'colour'):
-								for all_piece in live_board: # If there's a piece on the square we clicked, and that piece is of the right colour:.
-									deselect(all_piece) # Deselect all board, then:
-								select(piece_)  		# Select the piece
+								for all_piece in live_board: 
+									deselect(all_piece)
+								select(piece_)
 			# Quit on 'q'
 			elif event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_q:
